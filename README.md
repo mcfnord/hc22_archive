@@ -18,6 +18,8 @@ To attack a piece, ask your opponent to remove it from the board.
 
 To swap king and queen, move one piece to a neutral spot first.
 
+The "waiting for white to move" detail is probably wrong. You just have to know it's your turn, perhaps because your opponent told you.
+
 ## Game Rules
 
 Click any piece to see spots that can be impacted by any of its moves.
