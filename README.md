@@ -12,7 +12,7 @@ You can move your pieces all over at any time. Don't do it during other player t
 During your turn, you can move pieces around. If you want to reset to the start of your turn,
 click *Oops*. When you've made your move, click *That's mahmove*.
 
-## Quirks you must deal with right now
+## Quirks you must deal with until I fix them
 
 To attack a piece, ask your opponent to remove it from the board.
 
@@ -44,3 +44,12 @@ The Possible Move Indicator doesn't show special pawn configurations (mob or acr
 Reaching the opposite side of the board with a pawn has no special outcome.
 
 A piece can kamakazi an opponent piece in the portal, both pieces go into limbo, but a regeneration could result for the attacker color. Not sure if this differs from typical meatspace rules.
+
+# Join us
+
+This code has been prepared by the Git Blox Bois. We welcome new players and contributors. 
+This repository contains the server code. You can also see the browser code here:
+https://github.com/oinke/hexchess-www
+
+The Git Blox Bois are an international anarchist hacker collective that opposes the patriarchy
+and encourages gender and sexual minorities to contribute and play.
