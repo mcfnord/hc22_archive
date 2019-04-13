@@ -44,7 +44,7 @@ The Possible Move Indicator doesn't show special pawn configurations (mob or acr
 
 Reaching the opposite side of the board with a pawn has no special outcome.
 
-A piece can kamakazi an opponent piece in the portal, both pieces go into limbo, but a regeneration could result for the attacker color. Not sure if this differs from typical meatspace rules.
+A piece can kamakazi an opponent piece in the portal, both pieces go into limbo, but a regeneration could result for the attacker color. Not sure if this differs from typical meatspace rules. We just prefer this approach.
 
 # Join us
 
