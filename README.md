@@ -13,7 +13,8 @@ click **Oops**. When you've made your move, click **That's mahmove**.
 
 ## Game Rules
 
-To win, checkmate an opponent, or get your king down the center spot.
+To win, cause a checkmate that stands when the 
+target's turn begins, or get your king down the center spot.
 
 Click any piece to see spots that can be impacted by any of its moves.
 
