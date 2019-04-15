@@ -40,7 +40,7 @@ namespace ht22
 
         private static X509Certificate2 LoadCertificate()
         {
-            var physicalFileSystem = new PhysicalFileProvider("c:/t/ht22/ht22");
+            var physicalFileSystem = new PhysicalFileProvider("c:/t/hc22");
             var certificateFileInfo = physicalFileSystem.GetFileInfo("ladybuginternational.pfx");
 
             using (var certificateStream = certificateFileInfo.CreateReadStream())
