@@ -35,13 +35,13 @@ namespace ht22.Controllers
             m_allPieces.Add(id, board);
             m_allHues.Add(id, new Dictionary<HexC.ColorsEnum, Dictionary<string, string>>());
             m_allHues[id].Add(HexC.ColorsEnum.White, new Dictionary<string, string>());
-            m_allHues[id][HexC.ColorsEnum.White].Add("n0_n0", "9,9,9,1.0");
+         // what is this about???   m_allHues[id][HexC.ColorsEnum.White].Add("n0_n0", "9,9,9,1.0");
             m_allHues[id].Add(HexC.ColorsEnum.Black, new Dictionary<string, string>());
             m_allHues[id].Add(HexC.ColorsEnum.Tan, new Dictionary<string, string>());
         }
 
         public static bool ContainsGame(string id) { return m_allPieces.ContainsKey(id); }
-        public static Dictionary<string,string> GameBoard(string id) { return m_allPieces[id]; }
+        public static Dictionary<string,string> GameBoard(string id) { if(m_allPieces.ContainsKey(id)) return m_allPieces[id]; return null; }
         public static Dictionary<string,string> Hues(string id, string color) { return m_allHues[id][ColorEnumFromString(color)]; }
         public static void ReplaceHues(string id, string color, Dictionary<string, string> hues)
         {
@@ -306,6 +306,20 @@ namespace ht22.Controllers
                     return BadRequest();
                 MakeCertainGameExists(gameId);
                 var board = VisualBoardStore.GameBoard(gameId);
+
+                if (VisualBoardStore.ContainsGame(gameId + "SNAPSHOT"))
+                {
+                    var hintboard = new List<string>();
+                    foreach (var item in VisualBoardStore.GameBoard(gameId + "SNAPSHOT"))
+                    {
+                        var key = item.Key;
+                        if (item.Value != board[key])
+                            hintboard.Add(key); // hint this spot globally as a clue
+                    }
+   //                 VisualBoardStore.StoreHints(hintboard);
+                }
+
+
                 // just store that last board state in case someone hits turn reset.
                 if(VisualBoardStore.ContainsGame(gameId + "SNAPSHOT"))
                     VisualBoardStore.KillBoard(gameId + "SNAPSHOT"); // if any...
@@ -380,22 +394,24 @@ namespace ht22.Controllers
 
                 string json = "[";
 
-                    foreach (var spot in board)
-                    {
-                        json += "{\"loc\":\"" + spot.Key;
-                        json += "\",\"tok\":\"" + spot.Value;
+                foreach (var spot in board)
+                {
+                    json += "{\"loc\":\"" + spot.Key;
+                    json += "\",\"tok\":\"" + spot.Value;
 
-                        string hue = "128,128,128,0.9";
-                        if (spot.Key == "n0_n0")
-                            hue = "0,0,0,1.0";
+                    string hue = "128,128,128,0.9";
+                    if (spot.Key == "n0_n0")
+                        hue = "0,0,0,1.0";
+
+                    if (hues.ContainsKey(spot.Key))
+                        hue = hues[spot.Key];
 
 
-                        if (hues.ContainsKey(spot.Key))
-                            hue = hues[spot.Key];
-                        json += "\",\"hue\":\"" + hue;
 
-                        json += "\"},";
-                    }
+                    json += "\",\"hue\":\"" + hue;
+
+                    json += "\"},";
+                }
 
                 json = json.Substring(0, json.Length - 1);
                 json += "]";

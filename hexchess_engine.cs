@@ -465,6 +465,16 @@ namespace HexC
         {
             // if any piece can reach me, I'm in check.
             PlacedPiece king = FindPiece(PiecesEnum.King, c);
+
+            // ok, sometimes there's no king on the board.
+            // mostly cuz people are just playing.
+            // so say they aren't in check in that case.
+            if (null == king)
+            {
+                Console.WriteLine("Some joker has no king on the board, so you can't put that joker into check.");
+                return false;
+            }
+
             foreach (PlacedPiece p in placedPieces)
             {
                 //                if (CanAttack(p, king))
@@ -575,10 +585,15 @@ namespace HexC
 
                         foreach (BoardLocation b in m_QueenDesties)
                         {
+                            // ok, the results don't know if we're tryin to attack our own piece. we can't do that.
                             PlacedPiece pieceInDanger = this.AnyoneThere(b);
                             if (null != pieceInDanger)
                                 if (p.Color == pieceInDanger.Color)
                                     continue;
+
+                            // special case: is this the portal? is it empty? then it's not a valid destination.
+                            if (b.IsPortal && null == this.AnyoneThere(b))
+                                continue;
 
                             options.Add(b);
                         }
@@ -1167,6 +1182,8 @@ namespace HexC
             Board b = new Board();
             foreach (var spot in willBoard.Keys)
             {
+                if (spot[1] == 'V')
+                    continue; // i do NOT care about pieces that aren't on the actual board (are in limbo)
                 int q = 0, r = 0;
                 ParseQRFromLoc(spot, ref q, ref r);
                 ColorsEnum color = ColorsEnum.White;
@@ -1199,7 +1216,7 @@ namespace HexC
                     foreach (BoardLocation bl in locs)
                     {
                         // find it, light it up.
-                        huesOfBoard[WillsAddress(bl.Q, bl.R)] = "255,0,0,0.9"; // red!
+                        huesOfBoard[WillsAddress(bl.Q, bl.R)] = "210,0,0,0.7"; // red!
                     }
                     // show the place where we're startin
                     huesOfBoard[WillsAddress(piece.Location.Q, piece.Location.R)] = "128,128,255,0.9";
