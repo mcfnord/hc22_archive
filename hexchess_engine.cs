@@ -742,6 +742,12 @@ namespace HexC
             // Now see if there's also a sequence of events after diddily-doo
             // Is the Queen next to the king?
             PlacedPiece king = FindPiece(PiecesEnum.King, p.Color);
+
+            // listen, we have loose board constraints right now, and you can move your king off the board.
+            // If you do, then no, you can't caus enothin.
+            if (null == king)
+                return allPotentialOutcomes; // nothin really
+
             PlacedPiece queen = FindPiece(PiecesEnum.Queen, p.Color);
             if (null != queen)
             {
