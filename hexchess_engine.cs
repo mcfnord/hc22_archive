@@ -598,6 +598,9 @@ namespace HexC
                             options.Add(b);
                         }
 
+                        if (fShallowCheck)
+                            options = YankSpotsThatPutMeInCheck(options, p);
+
                         return options;
                     }
 
