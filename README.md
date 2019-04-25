@@ -16,11 +16,13 @@ click **Oops**. When you've made your move, click **That's mahmove**.
 To win, cause a checkmate that stands when the 
 target's turn begins, or get your king down the center spot.
 
+## Handling pieces and moves
+
 Click any piece to see spots that can be impacted by any of its moves.
 
 To move a piece, click it, drag it to the destionation, and release it.
 
-# Diddily-doo
+### Diddily-doo
 
 When the king and queen are touching, they can start a turn with an optional position swap.
 This looks odd at first, as they appear in red. It means they could optionally swap.
