@@ -13,9 +13,16 @@ click **Oops**. When you've made your move, click **That's mahmove**.
 
 ## Game Rules
 
-To win, checkmate an opponent, or get your king down the center spot.
+To win, cause a checkmate that stands when the 
+target's turn begins, or get your king down the center spot.
+
+## Handling pieces and moves
 
 Click any piece to see spots that can be impacted by any of its moves.
+
+To move a piece, click it, drag it to the destionation, and release it.
+
+### Diddily-doo
 
 When the king and queen are touching, they can start a turn with an optional position swap.
 This looks odd at first, as they appear in red. It means they could optionally swap.
@@ -27,8 +34,6 @@ The queen can, after the optional spot swap with the king.
 You can move your pieces anywhere at any time. Don't do it during other player turns.
 
 It's up to you to assure the turn you choose is valid.
-
-To attack a piece, ask your opponent to remove it from the board.
 
 To swap king and queen, move one piece to a neutral spot first.
 
