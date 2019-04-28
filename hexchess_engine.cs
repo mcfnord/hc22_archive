@@ -571,11 +571,14 @@ namespace HexC
                         }
 
                         options = YankSpotsThatArentBoardSpots(options);
-                        if (fShallowCheck)
-                            options = YankSpotsThatPutMeInCheck(options, p);
 
                         if (PiecesEnum.Castle == p.PieceType)
+                        {
+                            if (fShallowCheck)
+                                options = YankSpotsThatPutMeInCheck(options, p);
+
                             return options;
+                        }
 
                         // IF WE GET THIS FAR, THE PIECE IS A QUEEN.
                         m_QueenDesties = new BoardLocationList();
