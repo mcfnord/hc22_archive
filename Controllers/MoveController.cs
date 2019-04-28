@@ -42,8 +42,8 @@ namespace ht22.Controllers
 
         public static bool ContainsGame(string id) { return m_allPieces.ContainsKey(id); }
         public static Dictionary<string,string> GameBoard(string id) { if(m_allPieces.ContainsKey(id)) return m_allPieces[id]; return null; }
-        public static Dictionary<string,string> Hues(string id, string color) { return m_allHues[id][ColorEnumFromString(color)]; }
-        public static void ReplaceHues(string id, string color, Dictionary<string, string> hues)
+        public static Dictionary<string,string> TeamHues(string id, string color) { return m_allHues[id][ColorEnumFromString(color)]; }
+        public static void ReplaceTeamHues(string id, string color, Dictionary<string, string> hues)
         {
             HexC.ColorsEnum col = ColorEnumFromString(color);
             m_allHues[id][col] = hues;
@@ -227,16 +227,64 @@ namespace ht22.Controllers
             // allHues.Add(id, new Dictionary<string, string>());
         }
 
+        protected static void AddPieceToLimbo(Dictionary<string, string> board, string newLimboOccupant)
+        {
+            // find an empty spot in the limbo for this color.
+            char col = newLimboOccupant[0];
+            for (int ispot = 1; ispot < 14; ispot++)
+            {
+                string spotKey = ispot.ToString();
+                if (spotKey.Length == 1)
+                    spotKey = "0" + spotKey;
+                spotKey = col + "V_" + spotKey;
+
+                if (board[spotKey] == "XX")
+                {
+                    board[spotKey] = newLimboOccupant;
+                    return;
+                }
+            }
+            Debug.Assert(false);
+        }
+
+        protected static void MoveFromLimboIfPossible(Dictionary<string, string> board, char attackColor, char pieceKilled)
+        {
+            if (board["n0_n0"] != "XX")
+                return;
+
+            string lookinFor = attackColor.ToString() + pieceKilled.ToString();
+
+            for (int ispot = 1; ispot < 14; ispot++)
+            {
+                string spotKey = ispot.ToString();
+                if (spotKey.Length == 1)
+                    spotKey = "0" + spotKey;
+                spotKey = attackColor + "V_" + spotKey;
+
+                if (board[spotKey] == lookinFor)
+                {
+                    // yep, so move it from limbo to portal
+                    board["n0_n0"] = lookinFor;
+                    board[spotKey] = "XX";
+                    return;
+                }
+            }
+        }
+
+
         [HttpPost]
         public IActionResult Pieces([FromBody] Move move)
         {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
+                if (move.gameId == null)
+                    return BadRequest();
                 MakeCertainGameExists(move.gameId);
                 var board = VisualBoardStore.GameBoard(move.gameId); // allPieces[move.gameId];
 
-                string movefrom = move.moveFrom.Substring(0, 5);
+                string movefromWithoutPieceNoise = move.moveFrom.Substring(0, 5);
 
                 /* not happening cuz i can't click a piece as my targ. 
                 if (board[move.moveTo][1] == 'Q')
@@ -248,23 +296,42 @@ namespace ht22.Controllers
                     }
                     */
 
+                string justCheckinSrc = board[movefromWithoutPieceNoise];
+                string justCheckinDest = board[move.moveTo];
+                if(justCheckinSrc == "XX")
+                {
+                    return Ok();
+                }
+
                 if (board[move.moveTo] == "XX")
                 {
-                    board[move.moveTo] = board[movefrom];
-                    board[movefrom] = "XX";
+                    board[move.moveTo] = board[movefromWithoutPieceNoise];
+                    board[movefromWithoutPieceNoise] = "XX";
                 }
                 else
                 {
                     // you're moving to a spot that contains a piece.
-                    // is it an opponent piece?
-                    // well i don't care.
-                    // if I'm attacking a piece, i'd be so cool if i:
-                    // 1. moved that piece to limbo, 
-                    // 2. moved same-color same-piece FROM limbo if possible.
-                    // (if portal is occupied, then it's not possible).
+                    // i'm pretty sure will requires that the target is an opponent piece.
+                    // so just do the easy here and shove that piece off and take its spot.
+                    // and put a piece of mine in the center if it's unoccupied.
+                    // still, if it's my color, then leave it.
+                    if(board[move.moveTo][0] != board[movefromWithoutPieceNoise][0]) // different color?
+                    {
+                        // ok, it's a different color. move that target off to the limbo.
+                        // but I wanna know what kinda piece it is first.
+                        char attackColor = board[movefromWithoutPieceNoise][0];
+                        char pieceKilled = board[move.moveTo][1];
+                        AddPieceToLimbo(board, board[move.moveTo]);
+                        MoveFromLimboIfPossible(board, attackColor, pieceKilled);
+
+//                        if(move.moveTo == "n0_n0")
+                        board[move.moveTo] = board[movefromWithoutPieceNoise];
+                        board[movefromWithoutPieceNoise] = "XX";
+                    }
                 }
 
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                InternalSelected(move.gameId, move.moveTo, move.color); // wanna see the options where the piece lands
+
                 return Ok();
             }
             finally { s.Release(); }
@@ -274,6 +341,7 @@ namespace ht22.Controllers
         [HttpPost]
         public IActionResult TurnReset([FromQuery] string gameId, [FromQuery] string color)
         {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
@@ -288,7 +356,6 @@ namespace ht22.Controllers
 
                 VisualBoardStore.AddBoard(gameId, newboard); // overwrite it
 
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return Ok();
             }
             finally { s.Release(); }
@@ -299,6 +366,7 @@ namespace ht22.Controllers
         [HttpPost]
         public IActionResult TurnConcluded([FromQuery] string gameId, [FromQuery] string color)
         {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
@@ -328,51 +396,57 @@ namespace ht22.Controllers
                     newboard.Add(item.Key, item.Value);
                 VisualBoardStore.AddBoard(gameId + "SNAPSHOT", newboard);
 
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
                 return Ok();
             }
             finally { s.Release(); }
         }
 
+        public string InternalSelected(string gameId, string loc, string color)
+        {
+            if (null == gameId || color == null)
+                return null;
+            MakeCertainGameExists(gameId);
+            var board = VisualBoardStore.GameBoard(gameId);
+
+            Dictionary<string, string> boardHues = new Dictionary<string, string>();
+            foreach (var pos in board.Keys)
+                if (pos == "n0_n0")
+                    boardHues.Add(pos, "0,0,0,1.0"); // black center
+                else
+                    boardHues.Add(pos, "128,128,128,0.9"); // gray by default
+
+            HexC.Program.LightUpWillsBoard(board, boardHues, loc);
+            VisualBoardStore.ReplaceTeamHues(gameId, color, boardHues);
+
+            string json = "";
+            json = "[";
+
+            foreach (var spot in board)
+            {
+                json += "{\"loc\":\"" + spot.Key;
+                json += "\",\"tok\":\"" + spot.Value;
+                json += "\",\"hue\":\"" + boardHues[spot.Key];  // (spot.Key[0] == 'P' ? "0,255,0,0.7" : "255,0,0,0.7");
+
+                json += "\"},";
+            }
+            json = json.Substring(0, json.Length - 1);
+            json += "]";
+
+            return json;
+        }
 
         //  Get the board from the perspective of one selected piece
         [HttpGet]
         public IActionResult Selected([FromQuery] string gameId, [FromQuery] string loc, [FromQuery] string color)
         {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
                 if (gameId == null)
                     return BadRequest();
-                MakeCertainGameExists(gameId);
-                var board = VisualBoardStore.GameBoard(gameId);
 
-                Dictionary<string, string> boardHues = new Dictionary<string, string>();
-                foreach (var pos in board.Keys)
-                    if (pos == "n0_n0")
-                        boardHues.Add(pos, "0,0,0,1.0"); // black center
-                    else
-                        boardHues.Add(pos, "128,128,128,0.9"); // gray by default
-
-                HexC.Program.LightUpWillsBoard(board, boardHues, loc);
-                VisualBoardStore.ReplaceHues(gameId, color, boardHues);
-
-                string json = "";
-                json = "[";
-
-                    foreach (var spot in board)
-                    {
-                        json += "{\"loc\":\"" + spot.Key;
-                        json += "\",\"tok\":\"" + spot.Value;
-                        json += "\",\"hue\":\"" + boardHues[spot.Key];  // (spot.Key[0] == 'P' ? "0,255,0,0.7" : "255,0,0,0.7");
-
-                        json += "\"},";
-                    }
-                    json = json.Substring(0, json.Length - 1);
-                    json += "]";
-
-                //Response.Headers.Add("Access-Control-Allow-Origin", "https://hexagonalchess.online");
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                string json = InternalSelected(gameId, loc, color);
                 return Ok(json);
             }
             finally { s.Release(); }
@@ -382,14 +456,15 @@ namespace ht22.Controllers
         [HttpGet]
         public IActionResult Board([FromQuery] string gameId, [FromQuery] string color)
         {
-        System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
                 if (null == gameId || color == null)
                     return BadRequest();
                 MakeCertainGameExists(gameId);
                 var board = VisualBoardStore.GameBoard(gameId);
-                var hues = VisualBoardStore.Hues(gameId, color);
+                var hues = VisualBoardStore.TeamHues(gameId, color);
             //            var hues = VisualBoardStore.ReplaceHues(gameid, color);
 
                 string json = "[";
@@ -416,8 +491,6 @@ namespace ht22.Controllers
                 json = json.Substring(0, json.Length - 1);
                 json += "]";
 
-                //Response.Headers.Add("Access-Control-Allow-Origin", "https://hexagonalchess.online");
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
                 return Ok(json);
             }
             finally { s.Release(); }
