@@ -337,6 +337,34 @@ namespace ht22.Controllers
             finally { s.Release(); }
         }
 
+        protected Dictionary<string, string> FreshCopyOf(Dictionary<string, string> board)
+        {
+            Dictionary<string, string> newboard = new Dictionary<string, string>();
+            foreach (var item in board)
+                newboard.Add(item.Key, item.Value);
+            return newboard;
+        }
+
+        protected bool NoDifferences(Dictionary<string, string> b1, Dictionary<string, string> b2)
+        {
+            foreach( var k in b1.Keys)
+            {
+                if (false == b2.ContainsKey(k))
+                    return false;
+                if (b1[k] != b2[k])
+                    return false;
+            }
+            foreach (var k in b2.Keys)
+            {
+                if (false == b1.ContainsKey(k))
+                    return false;
+                if (b1[k] != b2[k])
+                    return false;
+            }
+            return true;
+        }
+
+
         //  TurnReset
         [HttpPost]
         public IActionResult TurnReset([FromQuery] string gameId, [FromQuery] string color)
@@ -345,22 +373,27 @@ namespace ht22.Controllers
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
-                if (gameId == null)
-                    return BadRequest();
+                if (gameId == null || color == null) return BadRequest();
                 MakeCertainGameExists(gameId);
-                var board = VisualBoardStore.GameBoard(gameId + "SNAPSHOT");
-                VisualBoardStore.KillBoard(gameId);
-                var newboard = new Dictionary<string, string>();
-                foreach (var item in board)
-                    newboard.Add(item.Key, item.Value);
 
-                VisualBoardStore.AddBoard(gameId, newboard); // overwrite it
-
+                string highestGameSnapshot = null;
+                for( int iStep = 100; iStep < 1000; iStep++)
+                {
+                    if (VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
+                    {
+                        highestGameSnapshot = gameId + iStep.ToString();
+                        continue;
+                    }
+                    // Set the board to the highest game snapshot we have.
+                    var board = VisualBoardStore.GameBoard(highestGameSnapshot);
+                    var newboard = FreshCopyOf(board);
+                    VisualBoardStore.KillBoard(gameId);
+                    VisualBoardStore.AddBoard(gameId, newboard); // overwrite it
+                }
             return Ok();
             }
             finally { s.Release(); }
         }
-
 
         //  TurnReset
         [HttpPost]
@@ -370,36 +403,96 @@ namespace ht22.Controllers
             System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
             try
             {
-                if (gameId == null)
-                    return BadRequest();
+                if (gameId == null || color == null) return BadRequest();
                 MakeCertainGameExists(gameId);
+
                 var board = VisualBoardStore.GameBoard(gameId);
 
-                if (VisualBoardStore.ContainsGame(gameId + "SNAPSHOT"))
-                {
-                    var hintboard = new List<string>();
-                    foreach (var item in VisualBoardStore.GameBoard(gameId + "SNAPSHOT"))
-                    {
-                        var key = item.Key;
-                        if (item.Value != board[key])
-                            hintboard.Add(key); // hint this spot globally as a clue
-                    }
-   //                 VisualBoardStore.StoreHints(hintboard);
-                }
-
-
+                // Some day this move will be validated, but for now, I just find the next sequential snapshot slot and store the board there.
                 // just store that last board state in case someone hits turn reset.
-                if(VisualBoardStore.ContainsGame(gameId + "SNAPSHOT"))
-                    VisualBoardStore.KillBoard(gameId + "SNAPSHOT"); // if any...
-                var newboard = new Dictionary<string, string>();
-                foreach (var item in board)
-                    newboard.Add(item.Key, item.Value);
-                VisualBoardStore.AddBoard(gameId + "SNAPSHOT", newboard);
+
+                var newboard = FreshCopyOf(board);
+
+                for (int iStep = 100; iStep < 1000; iStep++)
+                {
+                    if (VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
+                        continue;
+
+                    // ok we found this game snapshot name
+                    VisualBoardStore.AddBoard(gameId + iStep.ToString(), newboard);
+                    break;
+                }
 
                 return Ok();
             }
             finally { s.Release(); }
         }
+
+        //  Revert to the previous snapshot
+        [HttpPost]
+        public IActionResult Back([FromQuery] string gameId)
+        {
+            System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
+            try
+            {
+                if (gameId == null) return BadRequest();
+                MakeCertainGameExists(gameId);
+                for (int iStep = 1000; iStep > 99; iStep--)
+                    if (VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
+                    {
+                        // when the snapshot board matches the current board, we go one past that one...
+                        var snapBoard = VisualBoardStore.GameBoard(gameId + iStep);
+                        var curBoard = VisualBoardStore.GameBoard(gameId);
+                        if(NoDifferences(curBoard, snapBoard))
+                        {
+                            iStep--;
+                            if (iStep == 99)
+                                break;
+                            var newboard = FreshCopyOf(VisualBoardStore.GameBoard(gameId + iStep.ToString()));
+                            VisualBoardStore.KillBoard(gameId) ;
+                            VisualBoardStore.AddBoard(gameId, newboard);
+                            break;
+                        }
+                    }
+                return Ok();
+            }
+            finally { s.Release(); }
+        }
+
+        //  If we are a snapshot, push game forward one step.
+        [HttpPost]
+        public IActionResult Forward([FromQuery] string gameId)
+        {
+            System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
+            try
+            {
+                if (gameId == null) return BadRequest();
+                MakeCertainGameExists(gameId);
+                for (int iStep = 1000; iStep > 99; iStep--)
+                    if (VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
+                    {
+                        // when the snapshot board matches the current board, we go one past that one...
+                        var snapBoard = VisualBoardStore.GameBoard(gameId + iStep);
+                        var curBoard = VisualBoardStore.GameBoard(gameId);
+                        if (NoDifferences(curBoard, snapBoard))
+                        {
+                            iStep++;
+                            if (iStep == 1000)
+                                break;
+                            if (false == VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
+                                break;
+
+                            var newboard = FreshCopyOf(VisualBoardStore.GameBoard(gameId + iStep.ToString()));
+                            VisualBoardStore.KillBoard(gameId);
+                            VisualBoardStore.AddBoard(gameId, newboard);
+                            break;
+                        }
+                    }
+                return Ok();
+            }
+            finally { s.Release(); }
+        }
+
 
         public string InternalSelected(string gameId, string loc, string color)
         {
