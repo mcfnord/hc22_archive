@@ -244,7 +244,7 @@ namespace HexC
         EventTypeEnum t;
 
         public PlacedPiece Regarding { get { return p; } }
-        public EventTypeEnum Type { get { return t; } }
+        public EventTypeEnum EventType { get { return t; } }
     }
 
 
@@ -1015,7 +1015,7 @@ namespace HexC
             {
                 foreach (var change in changes)
                 {
-                    if (change.Type == EventTypeEnum.Add)
+                    if (change.EventType == EventTypeEnum.Add)
                     {
                         if (false == locs.ContainsTheLocation(change.Regarding.Location))
                             locs.Add(change.Regarding.Location);
@@ -1035,7 +1035,7 @@ namespace HexC
             {
                 foreach (var change in changes)
                 {
-                    if (change.Type == EventTypeEnum.Add)
+                    if (change.EventType == EventTypeEnum.Add)
                     {
                         bFlashy.Highlight(change.Regarding.Location);
                     }
@@ -1189,6 +1189,24 @@ namespace HexC
             return ret;
         }
 
+        protected static bool AKingDies(List<List<PieceEvent>> options)
+        {
+            // i just care if there's a set in here that removes a king without adding a king.
+            foreach(List<PieceEvent> lpe in options)
+            {
+                int iNetKingChange = 0;
+                foreach( PieceEvent pe in lpe )
+                {
+                    if (pe.Regarding.PieceType == PiecesEnum.King)
+                        iNetKingChange = ((pe.EventType == EventTypeEnum.Add) ? iNetKingChange + 1 : iNetKingChange - 1);
+                }
+                if (iNetKingChange < 0)
+                    return true;
+            }
+            return false;
+        }
+
+
         public static Dictionary<string, string> LightUpWillsBoard(Dictionary<string, string> willBoard, Dictionary<string, string> huesOfBoard, string loc)
         {
             Board b = new Board();
@@ -1215,8 +1233,20 @@ namespace HexC
                 }
             }
 
+            // First, show me any piece that puts a king in check now.
+//            BoardLocationList kingKillers = new BoardLocationList();
+            foreach(PlacedPiece pp in b.PlacedPieces)
+            {
+                List<List<PieceEvent>> options = b.WhatCanICauseWithDoo(pp);
+                if (AKingDies(options))
+                    huesOfBoard[WillsAddress(pp.Location.Q, pp.Location.R)] = "0,128,128,0.9";
+            }
+
             // with the board programmed, is the loc we've been passed a piece?
             {
+                if(loc == null)
+                    return null;
+
                 int q = 0, r = 0;
                 ParseQRFromLoc(loc, ref q, ref r);
                 PlacedPiece piece = b.AnyoneThere(new BoardLocation(q, r));
