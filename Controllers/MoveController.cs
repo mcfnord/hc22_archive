@@ -23,6 +23,30 @@ namespace ht22.Controllers
         // There's just one board per game, but each game has different hue maps for each player.
         protected static Dictionary<string, Dictionary<string, string>> m_allPieces = new Dictionary<string, Dictionary<string, string>>();
         protected static Dictionary<string, Dictionary<HexC.ColorsEnum, Dictionary<string, string>>> m_allHues = new Dictionary<string, Dictionary<HexC.ColorsEnum, Dictionary<string, string>>>();
+        // I care who pressed Turn End
+        protected static Dictionary<string, HexC.ColorsEnum> m_yourTurn = new Dictionary<string, HexC.ColorsEnum>();
+
+        public static void LastReportedTurnEnd(string gameId, string color)
+        {
+            switch(color)
+            {
+                case "white":
+                    m_yourTurn[gameId] = HexC.ColorsEnum.Tan;
+                    return;
+
+                case "tan":
+                    m_yourTurn[gameId] = HexC.ColorsEnum.Black;
+                    return;
+
+                case "black":
+                    m_yourTurn[gameId] = HexC.ColorsEnum.White;
+                    return;
+
+                default:
+                    Debug.Assert(false);
+                    return;
+            }
+        }
 
         public static void KillBoard(string gameid)
         {
@@ -422,6 +446,22 @@ namespace ht22.Controllers
                     VisualBoardStore.AddBoard(gameId + iStep.ToString(), newboard);
                     break;
                 }
+
+                Dictionary<string, string> boardHues = new Dictionary<string, string>();
+                foreach (var pos in board.Keys)
+                    if (pos == "n0_n0")
+                        boardHues.Add(pos, "0,0,0,1.0"); // black center
+                    else
+                        boardHues.Add(pos, "128,128,128,0.9"); // gray by default
+
+                HexC.Program.LightUpWillsBoard(board, boardHues, null);
+                VisualBoardStore.ReplaceTeamHues(gameId, "black", boardHues);
+                VisualBoardStore.ReplaceTeamHues(gameId, "white", boardHues);
+                VisualBoardStore.ReplaceTeamHues(gameId, "tan", boardHues);
+
+                // Store the color of the clicker party.
+                VisualBoardStore.LastReportedTurnEnd(gameId, color);
+
 
                 return Ok();
             }
