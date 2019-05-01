@@ -60,3 +60,5 @@ https://github.com/oinke/hexchess-www
 The Git Blox Bois are an international anarchist hacker collective that opposes the patriarchy
 and encourages gender and sexual minorities to contribute and play. You might find us here:
 https://hangouts.google.com/group/wxGfxZPxbj2pOy0M2
+
+https://blogs.scientificamerican.com/beautiful-minds/the-personality-of-political-correctness/
