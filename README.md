@@ -13,8 +13,17 @@ click **Oops**. When you've made your move, click **That's mahmove**.
 
 ## Game Rules
 
-To win, cause a checkmate that stands when the 
-target's turn begins, or get your king down the center spot.
+If your king and queen touch, your turn can begin by swapping them. You can do this to exit check, but can't enter check.
+
+If you take a piece of a kind you have lost, and the portal is empty, you can place your piece there.
+
+If you enter your turn with your piece in the portal, but you don't move it out of that spot, then it's lost again.
+
+If you attack an opponent piece that occcupies the portal, both pieces are lost, but if you've lost the kind of piece that you just attacked, your own piece appears in the portal.
+
+A player loses when their turn begins with them in checkmate. The player who first caused a checkmate state wins. 
+
+You can also win by getting your king down the center spot.
 
 ## Handling pieces and moves
 
