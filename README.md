@@ -31,13 +31,6 @@ Click any piece to see spots that can be impacted by any of its moves.
 
 To move a piece, click it, drag it to the destionation, and release it.
 
-### Diddily-doo
-
-When the king and queen are touching, they can start a turn with an optional position swap.
-This looks odd at first, as they appear in red. It means they could optionally swap.
-It also means the queen may appear to reach an enormous number of spots. 
-The queen can, after the optional spot swap with the king. 
-
 ## Quirks you must deal with until I fix them
 
 You can move your pieces anywhere at any time. Don't do it during other player turns.
