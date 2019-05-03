@@ -45,13 +45,11 @@ The "waiting for white to move" detail is probably wrong. You just have to know 
 
 You can play the same game as you might play face-to-face, because the Possible Move Indicators are not _enforced_.
 
+Pawns have no special moves. Reaching the opposite side of the board with a pawn has no special outcome.
+
 You can't add pieces (such as two-queen in the Olympia variant, or extra pawns in limbo as a handicap).
 
-The Possible Move Indicator doesn't show special pawn configurations (mob or acrobat). 
-
-Reaching the opposite side of the board with a pawn has no special outcome.
-
-A piece can kamakazi an opponent piece in the portal, both pieces go into limbo, but a regeneration could result for the attacker color. Not sure if this differs from typical meatspace rules. We just prefer this approach.
+The ability to attack a portal occupant probably differs.
 
 # Join us
 
