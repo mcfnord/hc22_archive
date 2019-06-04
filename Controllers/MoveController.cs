@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 //using fresh.Models;
 
 namespace ht22.Controllers
@@ -18,6 +19,28 @@ namespace ht22.Controllers
         public string moveTo { get; set; }
     }
 
+    public class Location
+    {
+        public bool IsPortal { get; set; }
+        public int Q { get; set; }
+        public int R { get; set; }
+    }
+
+    public class Regarding
+    {
+        public Location Location { get; set; }
+        public int PieceType { get; set; }
+        public int Color { get; set; }
+    }
+
+    public class RootObject
+    {
+        public Regarding Regarding { get; set; }
+        public int EventType { get; set; }
+    }
+
+
+
     public class VisualBoardStore
     {
         // There's just one board per game, but each game has different hue maps for each player.
@@ -28,7 +51,7 @@ namespace ht22.Controllers
 
         public static void LastReportedTurnEnd(string gameId, string color)
         {
-            switch(color)
+            switch (color)
             {
                 case "white":
                     m_yourTurn[gameId] = HexC.ColorsEnum.Tan;
@@ -59,21 +82,21 @@ namespace ht22.Controllers
             m_allPieces.Add(id, board);
             m_allHues.Add(id, new Dictionary<HexC.ColorsEnum, Dictionary<string, string>>());
             m_allHues[id].Add(HexC.ColorsEnum.White, new Dictionary<string, string>());
-         // what is this about???   m_allHues[id][HexC.ColorsEnum.White].Add("n0_n0", "9,9,9,1.0");
+            // what is this about???   m_allHues[id][HexC.ColorsEnum.White].Add("n0_n0", "9,9,9,1.0");
             m_allHues[id].Add(HexC.ColorsEnum.Black, new Dictionary<string, string>());
             m_allHues[id].Add(HexC.ColorsEnum.Tan, new Dictionary<string, string>());
         }
 
         public static bool ContainsGame(string id) { return m_allPieces.ContainsKey(id); }
-        public static Dictionary<string,string> GameBoard(string id) { if(m_allPieces.ContainsKey(id)) return m_allPieces[id]; return null; }
-        public static Dictionary<string,string> TeamHues(string id, string color) { return m_allHues[id][ColorEnumFromString(color)]; }
+        public static Dictionary<string, string> GameBoard(string id) { if (m_allPieces.ContainsKey(id)) return m_allPieces[id]; return null; }
+        public static Dictionary<string, string> TeamHues(string id, string color) { return m_allHues[id][ColorEnumFromString(color)]; }
         public static void ReplaceTeamHues(string id, string color, Dictionary<string, string> hues)
         {
             HexC.ColorsEnum col = ColorEnumFromString(color);
             m_allHues[id][col] = hues;
         }
 
-        protected static HexC.ColorsEnum ColorEnumFromString( string color )
+        protected static HexC.ColorsEnum ColorEnumFromString(string color)
         {
             HexC.ColorsEnum col = HexC.ColorsEnum.White;
             switch (color)
@@ -88,7 +111,7 @@ namespace ht22.Controllers
     [Controller]
     public class MoveController : Controller
     {
-        public MoveController() {        }
+        public MoveController() { }
 
         void MakeCertainGameExists(string id)
         {
@@ -214,8 +237,8 @@ namespace ht22.Controllers
 
 
 
-        //    board.Add("n1_p2", "WC");
-         //   board.Add("n1_n1", "WP");
+            //    board.Add("n1_p2", "WC");
+            //   board.Add("n1_n1", "WP");
 
             board.Add("n1_p2", "WP");
             board.Add("n1_n1", "TP");
@@ -247,7 +270,7 @@ namespace ht22.Controllers
 
             VisualBoardStore.AddBoard(id, board);
             VisualBoardStore.AddBoard(id + "SNAPSHOT", board);
-            
+
             // allHues.Add(id, new Dictionary<string, string>());
         }
 
@@ -322,7 +345,7 @@ namespace ht22.Controllers
 
                 string justCheckinSrc = board[movefromWithoutPieceNoise];
                 string justCheckinDest = board[move.moveTo];
-                if(justCheckinSrc == "XX")
+                if (justCheckinSrc == "XX")
                 {
                     return Ok();
                 }
@@ -339,7 +362,7 @@ namespace ht22.Controllers
                     // so just do the easy here and shove that piece off and take its spot.
                     // and put a piece of mine in the center if it's unoccupied.
                     // still, if it's my color, then leave it.
-                    if(board[move.moveTo][0] != board[movefromWithoutPieceNoise][0]) // different color?
+                    if (board[move.moveTo][0] != board[movefromWithoutPieceNoise][0]) // different color?
                     {
                         // ok, it's a different color. move that target off to the limbo.
                         // but I wanna know what kinda piece it is first.
@@ -348,7 +371,7 @@ namespace ht22.Controllers
                         AddPieceToLimbo(board, board[move.moveTo]);
                         MoveFromLimboIfPossible(board, attackColor, pieceKilled);
 
-//                        if(move.moveTo == "n0_n0")
+                        //                        if(move.moveTo == "n0_n0")
                         board[move.moveTo] = board[movefromWithoutPieceNoise];
                         board[movefromWithoutPieceNoise] = "XX";
                     }
@@ -371,7 +394,7 @@ namespace ht22.Controllers
 
         protected bool NoDifferences(Dictionary<string, string> b1, Dictionary<string, string> b2)
         {
-            foreach( var k in b1.Keys)
+            foreach (var k in b1.Keys)
             {
                 if (false == b2.ContainsKey(k))
                     return false;
@@ -401,7 +424,7 @@ namespace ht22.Controllers
                 MakeCertainGameExists(gameId);
 
                 string highestGameSnapshot = null;
-                for( int iStep = 100; iStep < 1000; iStep++)
+                for (int iStep = 100; iStep < 1000; iStep++)
                 {
                     if (VisualBoardStore.ContainsGame(gameId + iStep.ToString()))
                     {
@@ -414,7 +437,7 @@ namespace ht22.Controllers
                     VisualBoardStore.KillBoard(gameId);
                     VisualBoardStore.AddBoard(gameId, newboard); // overwrite it
                 }
-            return Ok();
+                return Ok();
             }
             finally { s.Release(); }
         }
@@ -468,6 +491,60 @@ namespace ht22.Controllers
             finally { s.Release(); }
         }
 
+
+        [HttpPost]
+        public IActionResult Events([FromQuery] string gameId)
+        {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            System.Threading.Semaphore s = new System.Threading.Semaphore(1, 1, "COPS"); s.WaitOne();
+            try
+            {
+                if (gameId == null) return BadRequest();
+                MakeCertainGameExists(gameId);
+
+                using (var reader = new System.IO.StreamReader(Request.Body))
+                {
+                    var body = reader.ReadToEnd();
+
+                    //JObject o = JObject.Parse(body);
+                    JArray a = JArray.Parse(body);
+
+
+
+
+
+                    var item = a.First;
+
+                    IList<RootObject> eventy = a.ToObject<IList<RootObject>>();
+
+
+                    Console.WriteLine(a);
+                    
+
+                //    IList<Person> person = a.ToObject<IList<Person>>();
+
+                 //   Console.WriteLine(person[0].Name);
+                    // John Smith
+
+                //    Console.WriteLine(person[1].Name);
+                    // Mike Smith
+                }
+
+                var board = VisualBoardStore.GameBoard(gameId);
+
+                return Ok();
+            }
+            finally { s.Release(); }
+        }
+
+
+
+
+
+
+
+
+
         //  Revert to the previous snapshot
         [HttpPost]
         public IActionResult Back([FromQuery] string gameId)
@@ -483,13 +560,13 @@ namespace ht22.Controllers
                         // when the snapshot board matches the current board, we go one past that one...
                         var snapBoard = VisualBoardStore.GameBoard(gameId + iStep);
                         var curBoard = VisualBoardStore.GameBoard(gameId);
-                        if(NoDifferences(curBoard, snapBoard))
+                        if (NoDifferences(curBoard, snapBoard))
                         {
                             iStep--;
                             if (iStep == 99)
                                 break;
                             var newboard = FreshCopyOf(VisualBoardStore.GameBoard(gameId + iStep.ToString()));
-                            VisualBoardStore.KillBoard(gameId) ;
+                            VisualBoardStore.KillBoard(gameId);
                             VisualBoardStore.AddBoard(gameId, newboard);
                             break;
                         }
@@ -598,7 +675,7 @@ namespace ht22.Controllers
                 MakeCertainGameExists(gameId);
                 var board = VisualBoardStore.GameBoard(gameId);
                 var hues = VisualBoardStore.TeamHues(gameId, color);
-            //            var hues = VisualBoardStore.ReplaceHues(gameid, color);
+                //            var hues = VisualBoardStore.ReplaceHues(gameid, color);
 
                 string json = "[";
 
