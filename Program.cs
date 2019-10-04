@@ -40,7 +40,7 @@ namespace ht22
 
         private static X509Certificate2 LoadCertificate()
         {
-            var physicalFileSystem = new PhysicalFileProvider("c:/t/hc22");
+            var physicalFileSystem = new PhysicalFileProvider("c:/Users/HexChess/hc22");
             var certificateFileInfo = physicalFileSystem.GetFileInfo("ladybuginternational.pfx");
 
             using (var certificateStream = certificateFileInfo.CreateReadStream())
@@ -52,7 +52,7 @@ namespace ht22
                     certificatePayload = memoryStream.ToArray();
                 }
 
-                return new X509Certificate2(certificatePayload, "shannon");
+                return new X509Certificate2(certificatePayload, "");
             }
         }
     }
